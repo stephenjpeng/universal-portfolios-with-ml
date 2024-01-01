@@ -10,6 +10,8 @@ from .cwmr import CWMR
 from .dynamic_crp import DynamicCRP
 from .eg import EG
 from .estimators import *
+from .greedy import Greedy
+from .hinted import Hinted
 from .kelly import Kelly
 from .mpt import MPT
 from .olmar import OLMAR
