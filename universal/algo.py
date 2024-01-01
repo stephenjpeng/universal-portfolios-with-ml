@@ -31,14 +31,19 @@ class Algo(object):
     #    raw:    pt
     PRICE_TYPE = "ratio"
 
-    def __init__(self, min_history: Optional[int] = None, frequency: int = 1, **kwargs):
+    def __init__(self, min_history: Optional[int] = None, frequency: int = 1,
+            hinted: bool = False, hinter=None,  **kwargs):
         """Subclass to define algo specific parameters here.
         :param min_history: If not None, use initial weights for first min_window days. Use
             this if the algo needs some history for proper parameter estimation.
         :param frequency: algorithm should trade every `frequency` periods
+        :param hinted: whether algorithm uses hints
+        :param hinter: *trained* Hint object for generating hints at each time step
         """
         self.min_history = min_history or 0
         self.frequency = frequency
+        self.hinted = hinted
+        self.hinter = hinter
 
     def init_weights(self, columns):
         """Set initial weights.
@@ -52,7 +57,7 @@ class Algo(object):
         """
         pass
 
-    def step(self, x, last_b, history=None):
+    def step(self, x, last_b, history=None, hint=None):
         """Calculate new portfolio weights. If history parameter is omited, step
         method gets passed just parameters `x` and `last_b`. This significantly
         increases performance.
@@ -70,15 +75,23 @@ class Algo(object):
 
         # init
         B = X.copy() * 0.0
-        last_b = self.init_weights(X.columns)
-        if isinstance(last_b, np.ndarray):
-            last_b = pd.Series(last_b, X.columns)
-
+        if self.hinted:
+            last_b = self.init_weights(X.columns, X.iloc[0])
+        else:
+            last_b = self.init_weights(X.columns)
+        if isinstance(last_b, np.ndarray): last_b = pd.Series(last_b, X.columns) 
         # run algo
-        self.init_step(X)
+        if self.hinted:
+            self.init_step(X, X.iloc[0])
+        else:
+            self.init_step(X)
+        
         for t, (_, x) in enumerate(X.iterrows()):
             # save weights
             B.iloc[t] = last_b
+            
+            if t == X.shape[0]-1:
+                continue
 
             # keep initial weights for min_history
             if t < min_history:
@@ -87,10 +100,17 @@ class Algo(object):
             # trade each `frequency` periods
             if (t - min_history) % self.frequency != 0:
                 continue
-
+                
             # predict for t+1
             history = X.iloc[: t + 1]
-            last_b = self.step(x, last_b, history)
+
+            if self.hinted:
+                next_x = X.iloc[t + 1]
+                hint = self.hinter.get_hint(next_x, history)
+                last_b = self.step(x, last_b, history, hint)
+            else:
+                last_b = self.step(x, last_b, history)
+
 
             # convert last_b to suitable format if needed
             if type(last_b) == np.matrix:
