@@ -20,4 +20,5 @@ from .pamr import PAMR
 from .rmr import RMR
 from .tco import TCO1, TCO2
 from .up import UP
+from .up_si import UPSI
 from .wmamr import WMAMR

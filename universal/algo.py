@@ -76,13 +76,13 @@ class Algo(object):
         # init
         B = X.copy() * 0.0
         if self.hinted:
-            last_b = self.init_weights(X.columns, X.iloc[0])
+            last_b = self.init_weights(X.columns, X.iloc[self.min_history])
         else:
             last_b = self.init_weights(X.columns)
         if isinstance(last_b, np.ndarray): last_b = pd.Series(last_b, X.columns) 
         # run algo
         if self.hinted:
-            self.init_step(X, X.iloc[0])
+            self.init_step(X, X.iloc[self.min_history])
         else:
             self.init_step(X)
         

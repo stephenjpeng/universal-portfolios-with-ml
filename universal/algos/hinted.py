@@ -18,7 +18,7 @@ class Hinted(Algo):
     REPLACE_MISSING = True
 
     def __init__(self, ll=0.5, unhinted_strategy=UP(), hinted_strategy=Greedy(),
-            how='add', hinter=None):
+            how='add', hinter=None, **kwargs):
         """
         :param ll: lambda parameter in the paper; amount of trust in the hint
         :param unhinted_strategy: unhinted strategy to use
@@ -27,7 +27,7 @@ class Hinted(Algo):
         :param hinter: *trained* Hint object for generating hints at each time step
         """
 
-        super().__init__(min_history=0, hinted=True, hinter=hinter)
+        super().__init__(hinted=True, hinter=hinter, **kwargs)
 
         # input check
         if ll < 0 or ll > 1:
